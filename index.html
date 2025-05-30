@@ -22,10 +22,12 @@
     .add-detail-btn { background: #e6d3b3; border: none; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
     .switch-btn { position: fixed; bottom: 20px; right: 20px; background: #c8a78f; color: #fff; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
     .switch-btn:hover { background: #e6d3b3; }
-    .fixed-actions { position: fixed; bottom: 20px; left: 20px; display: flex; gap: 10px; }
+    .fixed-actions { position: fixed; bottom: 20px; left: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
     .fixed-actions button, .fixed-actions a { padding: 10px 16px; border-radius: 12px; text-decoration: none; color: #fff; border: none; cursor: pointer; }
     .export-link { background: #c8a78f; }
     .import-btn { background: #805a3f; }
+    .auto-save-btn { background: #4a7c59; }
+    .save-notice { position: fixed; top: 20px; right: 20px; background: #4a7c59; color: white; padding: 8px 16px; border-radius: 8px; display: none; }
     .color-swatch { width: 40px; height: 40px; cursor: pointer; border-radius: 8px; border: 2px solid #333; }
     .palette-table td { padding: 4px; }
   </style>
@@ -52,8 +54,10 @@
     <div class="fixed-actions">
       <a id="exportLink" class="export-link" download="budget_state.json">Eksportuj JSON</a>
       <button id="importBtn" class="import-btn">Wczytaj JSON</button>
+      <button id="autoSaveBtn" class="auto-save-btn">Auto-zapis</button>
       <input type="file" id="fileInput" accept="application/json" style="display:none;" />
     </div>
+    <div id="saveNotice" class="save-notice">Dane zostały zapisane!</div>
   </div>
 
   <!-- Strona 2 -->
@@ -133,13 +137,35 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // State management with fallback for sandboxed environments
+      // State management with fallback and auto-backup
+      let autoBackupInterval;
       const saveState = s => {
         try {
           localStorage.setItem('budget', JSON.stringify(s));
         } catch(e) {
           // Fallback for sandboxed environments - store in memory only
           window.budgetState = s;
+          // Auto-create backup file every 30 seconds when data changes
+          if (!autoBackupInterval) {
+            autoBackupInterval = setInterval(() => {
+              if (window.budgetDataChanged) {
+                const json = JSON.stringify(s, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `budget_auto_backup.json`;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                // Don't auto-download, just show notice
+                showSaveNotice();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                window.budgetDataChanged = false;
+              }
+            }, 30000);
+          }
+          window.budgetDataChanged = true;
         }
       };
       const loadState = () => {
@@ -209,7 +235,9 @@
       const switchBtn = document.querySelector('.switch-btn');
       const exportLink = document.getElementById('exportLink');
       const importBtn = document.getElementById('importBtn');
+      const autoSaveBtn = document.getElementById('autoSaveBtn');
       const fileInput = document.getElementById('fileInput');
+      const saveNotice = document.getElementById('saveNotice');
       const tableBody = document.getElementById('tableBody');
       const exBody = document.getElementById('exampleBody');
 
@@ -225,6 +253,24 @@
       });
       tablePage.style.display = 'block'; 
       secondPage.style.display = 'none';
+
+      // Auto-save function
+      function showSaveNotice() {
+        saveNotice.style.display = 'block';
+        setTimeout(() => saveNotice.style.display = 'none', 2000);
+      }
+
+      autoSaveBtn.addEventListener('click', function() {
+        const json = JSON.stringify(state, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `budget_backup_${new Date().getTime()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showSaveNotice();
+      });
 
       // Export JSON
       exportLink.addEventListener('click', function(e) {
