@@ -26,6 +26,8 @@
     .fixed-actions button, .fixed-actions a { padding: 10px 16px; border-radius: 12px; text-decoration: none; color: #fff; border: none; cursor: pointer; }
     .export-link { background: #c8a78f; }
     .import-btn { background: #805a3f; }
+    .color-swatch { width: 40px; height: 40px; cursor: pointer; border-radius: 8px; border: 2px solid #333; }
+    .palette-table td { padding: 4px; }
   </style>
 </head>
 <body>
@@ -35,9 +37,9 @@
   <div id="tablePage">
     <h1>Budget 2025</h1>
     <div class="info">
-      Czerwiec startuje z budżetem 0, zaległy dług 5700 zł.<br>
-      Lipiec–Grudzień: +1000 zł do długu co miesiąc.<br>
-      Czynsz: 500 zł/mc<br>
+      Czerwiec startuje z budżetem 0, zaległy dług 5700 zł.<br>
+      Lipiec–Grudzień: +1000 zł do długu co miesiąc.<br>
+      Czynsz: 500 zł/mc<br>
       Spłata: 30% (budżet+przychody−czynsz)<br>
       Nadwyżka przechodzi dalej.
     </div>
@@ -111,7 +113,7 @@
         <option value="input-text">Kolor tekstu pól liczbowych</option>
         <option value="month-header-color">Kolor nagłówków miesięcy</option>
         <option value="detail-bg">Tło kolumn szczegółów</option>
-        <option value="add-btn-bg">Tło przycisku “+ Dodaj”</option>
+        <option value="add-btn-bg">Tło przycisku "+ Dodaj"</option>
         <option value="switch-bg">Tło przycisku przełączania</option>
         <option value="switch-text">Kolor tekstu przycisku przełączania</option>
         <option value="export-link-bg">Tło przycisku eksportu</option>
@@ -122,7 +124,7 @@
       </select>
       <button id="applyColorBtn" style="width:100%;">Zastosuj</button>
     </div>
-    <h2>Przykładowa tabela"</h2>
+    <h2>Przykładowa tabela</h2>
     <table class="example-table" id="exampleTable">
       <thead><tr><th>Miesiąc</th><th>Budżet</th><th>Przychody</th><th>Jedzenie</th></tr></thead>
       <tbody id="exampleBody"></tbody>
@@ -131,11 +133,31 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      // State management with fallback for sandboxed environments
+      const saveState = s => {
+        try {
+          localStorage.setItem('budget', JSON.stringify(s));
+        } catch(e) {
+          // Fallback for sandboxed environments - store in memory only
+          window.budgetState = s;
+        }
+      };
+      const loadState = () => {
+        try {
+          return JSON.parse(localStorage.getItem('budget')||'{"debt":5700,"example":[]}');
+        } catch(e) {
+          // Fallback for sandboxed environments
+          return window.budgetState || { debt: 5700, example: [] };
+        }
+      };
+      let state = loadState();
+
       // Color menu logic
       let selectedColor = null;
       const colorMenu = document.getElementById('colorMenu');
       const colorTarget = document.getElementById('colorTarget');
       const applyColorBtn = document.getElementById('applyColorBtn');
+      
       document.querySelectorAll('.color-swatch').forEach(s => {
         s.addEventListener('click', e => {
           selectedColor = s.style.backgroundColor;
@@ -144,6 +166,7 @@
           colorMenu.style.display = 'block';
         });
       });
+      
       applyColorBtn.addEventListener('click', () => {
         const target = colorTarget.value;
         switch(target) {
@@ -173,14 +196,12 @@
         }
         colorMenu.style.display = 'none';
       });
+      
       document.addEventListener('click', e => {
         if (!colorMenu.contains(e.target) && !e.target.classList.contains('color-swatch')) {
           colorMenu.style.display = 'none';
         }
       });
-      const saveState = s => localStorage.setItem('budget', JSON.stringify(s));
-      const loadState = () => JSON.parse(localStorage.getItem('budget')||'{}');
-      const state = loadState();
 
       // Elements
       const tablePage = document.getElementById('tablePage');
@@ -202,7 +223,8 @@
           tablePage.style.display = 'block';
         }
       });
-      tablePage.style.display = 'block'; secondPage.style.display = 'none';
+      tablePage.style.display = 'block'; 
+      secondPage.style.display = 'none';
 
       // Export JSON
       exportLink.addEventListener('click', function(e) {
@@ -211,17 +233,25 @@
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         this.href = url;
+        this.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       });
 
       // Import JSON
       importBtn.addEventListener('click', () => fileInput.click());
       fileInput.addEventListener('change', function() {
-        const file = this.files[0]; if (!file) return;
+        const file = this.files[0]; 
+        if (!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
-          try { Object.assign(state, JSON.parse(e.target.result)); saveState(state); location.reload(); }
-          catch { alert('Błędny plik JSON'); }
+          try { 
+            Object.assign(state, JSON.parse(e.target.result)); 
+            saveState(state);
+            location.reload(); 
+          }
+          catch { 
+            alert('Błędny plik JSON'); 
+          }
         };
         reader.readAsText(file);
       });
@@ -233,7 +263,8 @@
 
       window.addDetail = function(i, type) {
         const cont = document.getElementById(`det-${type}-${i}`);
-        const div = document.createElement('div'); div.className = 'detail-entry';
+        const div = document.createElement('div'); 
+        div.className = 'detail-entry';
         div.innerHTML = `<input type="text" placeholder="Nazwa"><input type="number" value="0" onchange="sumDetails(${i},'${type}')">`;
         cont.appendChild(div);
       };
@@ -246,7 +277,8 @@
       };
 
       function recalc() {
-        let debt = INITIAL_DEBT; carry = 0;
+        let debt = INITIAL_DEBT; 
+        carry = 0;
         months.forEach((_, i) => {
           if (i>=1 && i<=6) debt += 1000;
           const inc = +document.getElementById(`inc-${i}`).value || 0;
@@ -263,7 +295,9 @@
           document.getElementById(`deb-${i}`).value = debt;
           document.getElementById(`res-${i}`).value = rest;
           carry = rest;
-        }); state.debt = debt; saveState(state);
+        }); 
+        state.debt = debt;
+        saveState(state);
       }
 
       // Build main table
@@ -279,55 +313,78 @@
           <td><input type="number" disabled id="deb-${i}" value="${i===0?INITIAL_DEBT:0}"></td>
           <td><input type="number" disabled id="res-${i}" value="0"></td>
         `;
-        const dr = document.createElement('tr'); dr.className = 'details-row';
+        const dr = document.createElement('tr'); 
+        dr.className = 'details-row';
         dr.innerHTML = `
           <td colspan="8"><div class="detail-columns">
-            <div class="detail-column"><strong>Jedzenie</strong><div id="det-food-${i}"/></div><button class="add-detail-btn" onclick="addDetail(${i},'food')">+ Dodaj</button></div>
-            <div class="detail-column"><strong>Inne wydatki</strong><div id="det-extra-${i}"/></div><button class="add-detail-btn" onclick="addDetail(${i},'extra')">+ Dodaj</button></div>
+            <div class="detail-column"><strong>Jedzenie</strong><div id="det-food-${i}"></div><button class="add-detail-btn" onclick="addDetail(${i},'food')">+ Dodaj</button></div>
+            <div class="detail-column"><strong>Inne wydatki</strong><div id="det-extra-${i}"></div><button class="add-detail-btn" onclick="addDetail(${i},'extra')">+ Dodaj</button></div>
           </div></td>
         `;
         tableBody.append(tr, dr);
       });
+      
       tableBody.querySelectorAll('.month-header').forEach((cell,idx)=>cell.addEventListener('click',()=>{
-        const dr=tableBody.children[idx*2+1]; dr.style.display = dr.style.display==='table-row'?'none':'table-row';
+        const dr=tableBody.children[idx*2+1]; 
+        dr.style.display = dr.style.display==='table-row'?'none':'table-row';
       }));
+      
       tableBody.addEventListener('input', recalc);
       recalc();
 
       // Example table logic
-      const exMonths=['Czerwiec','Lipiec','Sierpień']; let exCarry=0;
-      state.example = state.example||[];
+      const exMonths=['Czerwiec','Lipiec','Sierpień']; 
+      let exCarry=0;
+      
       window.addDetailEx = function(i) {
         const cont=document.getElementById(`ex-det-${i}`);
-        const div=document.createElement('div'); div.className='detail-entry';
+        const div=document.createElement('div'); 
+        div.className='detail-entry';
         div.innerHTML = `<input type="text" placeholder="Nazwa"><input type="number" value="0" onchange="sumDetailsEx(${i})">`;
         cont.append(div);
       };
+      
       window.sumDetailsEx = function(i) {
         const vals=Array.from(document.querySelectorAll(`#ex-det-${i} input[type=number]`)).map(e=>+e.value||0);
         document.getElementById(`ex-food-${i}`).value=vals.reduce((a,b)=>a+b,0);
         recalcEx();
       };
-      function recalcEx(){ exCarry=0; exMonths.forEach((_,i)=>{
-        const inc=+document.getElementById(`ex-inc-${i}`).value||0;
-        const food=+document.getElementById(`ex-food-${i}`).value||0;
-        const base=exCarry+inc; document.getElementById(`ex-bud-${i}`).value=base;
-        exCarry=base-food;
-      }); state.example = exMonths.map((_,i)=>({inc:document.getElementById(`ex-inc-${i}`).value,food:document.getElementById(`ex-food-${i}`).value})); saveState(state); }
+      
+      function recalcEx(){ 
+        exCarry=0; 
+        exMonths.forEach((_,i)=>{
+          const inc=+document.getElementById(`ex-inc-${i}`).value||0;
+          const food=+document.getElementById(`ex-food-${i}`).value||0;
+          const base=exCarry+inc; 
+          document.getElementById(`ex-bud-${i}`).value=base;
+          exCarry=base-food;
+        }); 
+        state.example = exMonths.map((_,i)=>({
+          inc:document.getElementById(`ex-inc-${i}`).value,
+          food:document.getElementById(`ex-food-${i}`).value
+        })); 
+        saveState(state); 
+      }
+      
       exMonths.forEach((m,i)=>{
-        const row=document.createElement('tr'); row.innerHTML=`
+        const row=document.createElement('tr'); 
+        row.innerHTML=`
           <td class="month-header">${m}</td>
           <td><input type="number" disabled id="ex-bud-${i}" value="0"></td>
           <td><input type="number" id="ex-inc-${i}" value="${state.example[i]?.inc||0}" onchange="recalcEx()"></td>
           <td><input type="number" disabled id="ex-food-${i}" value="${state.example[i]?.food||0}"></td>
         `;
-        const dr=document.createElement('tr'); dr.className='details-row';
+        const dr=document.createElement('tr'); 
+        dr.className='details-row';
         dr.innerHTML=`<td colspan="4"><div class="detail-columns"><div class="detail-column"><strong>Jedzenie</strong><div id="ex-det-${i}"></div><button class="add-detail-btn" onclick="addDetailEx(${i})">+ Dodaj</button></div></div></td>`;
         exBody.append(row, dr);
       });
+      
       document.querySelectorAll('#exampleBody .month-header').forEach((c,i)=>c.addEventListener('click',()=>{
-        const dr=exBody.children[i*2+1]; dr.style.display=dr.style.display==='table-row'?'none':'table-row';
+        const dr=exBody.children[i*2+1]; 
+        dr.style.display=dr.style.display==='table-row'?'none':'table-row';
       }));
+      
       recalcEx();
     });
   </script>
