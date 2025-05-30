@@ -15,6 +15,8 @@
     tbody tr:nth-child(odd) td { background: #ffe7c1; }
     input { font-family: inherit; font-size: 1em; }
     input[type=number] { width: 80px; padding: 4px; border-radius: 6px; border: 1px solid #e4ad85; background: #feecd4; color: #805a3f; }
+    input[type=number]:not([disabled]) { background: #fff; cursor: text; }
+    input[type=number][disabled] { background: #feecd4; cursor: not-allowed; }
     .month-header { cursor: pointer; font-weight: bold; color: #916647; }
     .details-row { display: none; }
     .detail-columns { display: flex; gap: 20px; margin-top: 10px; }
@@ -30,6 +32,10 @@
     .save-notice { position: fixed; top: 20px; right: 20px; background: #4a7c59; color: white; padding: 8px 16px; border-radius: 8px; display: none; }
     .color-swatch { width: 40px; height: 40px; cursor: pointer; border-radius: 8px; border: 2px solid #333; }
     .palette-table td { padding: 4px; }
+    #secondPage { display: none; width: 100%; }
+    #tablePage { width: 100%; }
+    .detail-entry { margin-bottom: 5px; }
+    .detail-entry input[type="text"] { width: 150px; margin-right: 5px; padding: 4px; border-radius: 6px; border: 1px solid #e4ad85; }
   </style>
 </head>
 <body>
@@ -98,7 +104,7 @@
         </tr>
       </tbody>
     </table>
-    <!-- Color Menu -->
+
     <div id="colorMenu" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; padding:10px; border-radius:8px; z-index:1000;">
       <label for="colorTarget">Element do pokolorowania:</label>
       <select id="colorTarget" style="width:100%; margin-bottom:8px;">
@@ -128,11 +134,6 @@
       </select>
       <button id="applyColorBtn" style="width:100%;">Zastosuj</button>
     </div>
-    <h2>Przykładowa tabela</h2>
-    <table class="example-table" id="exampleTable">
-      <thead><tr><th>Miesiąc</th><th>Budżet</th><th>Przychody</th><th>Jedzenie</th></tr></thead>
-      <tbody id="exampleBody"></tbody>
-    </table>
   </div>
 
   <script>
@@ -154,6 +155,7 @@
         const saveToLocalStorage = () => {
           try {
             localStorage.setItem('budget', JSON.stringify(s));
+            console.log('Saved to localStorage successfully');
             return true;
           } catch(e) {
             console.warn('Failed to save to localStorage:', e);
@@ -195,6 +197,7 @@
         try {
           const stored = localStorage.getItem('budget');
           if (stored) {
+            console.log('Successfully loaded from localStorage');
             return JSON.parse(stored);
           }
         } catch(e) {
@@ -203,14 +206,50 @@
         
         // If localStorage fails or is empty, try memory storage
         if (window.budgetState) {
+          console.log('Loading from memory storage');
           return window.budgetState;
         }
         
         // If all else fails, return default state
-        return { debt: 5700, example: [] };
+        console.log('Using default state');
+        return {
+          debt: 5700,
+          monthlyData: {},
+          example: [],
+          details: {}
+        };
       };
 
       let state = loadState();
+
+      // Elements
+      const tablePage = document.getElementById('tablePage');
+      const secondPage = document.getElementById('secondPage');
+      const switchBtn = document.querySelector('.switch-btn');
+      const exportLink = document.getElementById('exportLink');
+      const importBtn = document.getElementById('importBtn');
+      const autoSaveBtn = document.getElementById('autoSaveBtn');
+      const fileInput = document.getElementById('fileInput');
+      const saveNotice = document.getElementById('saveNotice');
+      const tableBody = document.getElementById('tableBody');
+
+      // Toggle pages
+      switchBtn.addEventListener('click', () => {
+        console.log('Switch button clicked');
+        if (tablePage.style.display !== 'none') {
+          tablePage.style.display = 'none';
+          secondPage.style.display = 'block';
+          console.log('Switching to second page');
+        } else {
+          tablePage.style.display = 'block';
+          secondPage.style.display = 'none';
+          console.log('Switching to first page');
+        }
+      });
+
+      // Set initial display states explicitly
+      tablePage.style.display = 'block';
+      secondPage.style.display = 'none';
 
       // Color menu logic
       let selectedColor = null;
@@ -237,7 +276,7 @@
           case 'info-bg': document.querySelector('.info').style.backgroundColor = selectedColor; break;
           case 'info-text': document.querySelector('.info').style.color = selectedColor; break;
           case 'cell-border': document.querySelectorAll('th, td').forEach(c=>c.style.borderColor = selectedColor); break;
-          case 'thead-bg': document.querySelector('thead').style.backgroundColor = selectedColor; break;
+          case 'thead-bg': document.querySelectorAll('thead th').forEach(h=>h.style.backgroundColor = selectedColor); break;
           case 'row-even-bg': document.querySelectorAll('tbody tr:nth-child(even) td').forEach(r=>r.style.backgroundColor = selectedColor); break;
           case 'row-odd-bg': document.querySelectorAll('tbody tr:nth-child(odd) td').forEach(r=>r.style.backgroundColor = selectedColor); break;
           case 'input-bg': document.querySelectorAll('input[type=number]').forEach(i=>i.style.backgroundColor = selectedColor); break;
@@ -252,7 +291,7 @@
           case 'export-link-text': exportLink.style.color = selectedColor; break;
           case 'import-btn-bg': importBtn.style.backgroundColor = selectedColor; break;
           case 'import-btn-text': importBtn.style.color = selectedColor; break;
-          case 'table-shadow-color': document.querySelector('table').style.boxShadow = `0 2px 16px ${selectedColor}`; break;
+          case 'table-shadow-color': document.querySelectorAll('table').forEach(t=>t.style.boxShadow = `0 2px 16px ${selectedColor}`); break;
         }
         colorMenu.style.display = 'none';
       });
@@ -262,31 +301,6 @@
           colorMenu.style.display = 'none';
         }
       });
-
-      // Elements
-      const tablePage = document.getElementById('tablePage');
-      const secondPage = document.getElementById('secondPage');
-      const switchBtn = document.querySelector('.switch-btn');
-      const exportLink = document.getElementById('exportLink');
-      const importBtn = document.getElementById('importBtn');
-      const autoSaveBtn = document.getElementById('autoSaveBtn');
-      const fileInput = document.getElementById('fileInput');
-      const saveNotice = document.getElementById('saveNotice');
-      const tableBody = document.getElementById('tableBody');
-      const exBody = document.getElementById('exampleBody');
-
-      // Toggle pages
-      switchBtn.addEventListener('click', () => {
-        if (tablePage.style.display !== 'none') {
-          tablePage.style.display = 'none';
-          secondPage.style.display = 'block';
-        } else {
-          secondPage.style.display = 'none';
-          tablePage.style.display = 'block';
-        }
-      });
-      tablePage.style.display = 'block'; 
-      secondPage.style.display = 'none';
 
       // Auto-save function
       function showSaveNotice() {
@@ -306,36 +320,6 @@
         showSaveNotice();
       });
 
-      // Export JSON
-      exportLink.addEventListener('click', function(e) {
-        e.preventDefault();
-        const json = JSON.stringify(state, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        this.href = url;
-        this.click();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      });
-
-      // Import JSON
-      importBtn.addEventListener('click', () => fileInput.click());
-      fileInput.addEventListener('change', function() {
-        const file = this.files[0]; 
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          try { 
-            Object.assign(state, JSON.parse(e.target.result)); 
-            saveState(state);
-            location.reload(); 
-          }
-          catch { 
-            alert('Błędny plik JSON'); 
-          }
-        };
-        reader.readAsText(file);
-      });
-
       // Main table logic
       const months = ['Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
       const RENT = 500, INITIAL_DEBT = 5700;
@@ -343,21 +327,48 @@
 
       window.addDetail = function(i, type) {
         const cont = document.getElementById(`det-${type}-${i}`);
-        const div = document.createElement('div'); 
+        const div = document.createElement('div');
         div.className = 'detail-entry';
-        div.innerHTML = `<input type="text" placeholder="Nazwa"><input type="number" value="0" onchange="sumDetails(${i},'${type}')">`;
+        div.innerHTML = `
+          <input type="text" placeholder="Nazwa" value="">
+          <input type="number" value="0" onchange="sumDetails(${i},'${type}')">
+        `;
         cont.appendChild(div);
+        
+        // Save details state
+        if (!state.details) state.details = {};
+        if (!state.details[`${type}-${i}`]) state.details[`${type}-${i}`] = [];
+        state.details[`${type}-${i}`].push({ name: "", value: 0 });
+        saveState(state);
       };
 
       window.sumDetails = function(i, type) {
-        const vals = Array.from(document.querySelectorAll(`#det-${type}-${i} input[type=number]`))
-          .map(el => +el.value || 0);
-        document.getElementById(`${type}-${i}`).value = vals.reduce((a,b)=>a+b,0);
+        const container = document.getElementById(`det-${type}-${i}`);
+        const inputs = container.querySelectorAll('.detail-entry');
+        let total = 0;
+        
+        // Update state and calculate total
+        if (!state.details) state.details = {};
+        state.details[`${type}-${i}`] = [];
+        
+        inputs.forEach(entry => {
+          const nameInput = entry.querySelector('input[type="text"]');
+          const valueInput = entry.querySelector('input[type="number"]');
+          const value = +valueInput.value || 0;
+          total += value;
+          state.details[`${type}-${i}`].push({
+            name: nameInput.value,
+            value: value
+          });
+        });
+        
+        document.getElementById(`${type}-${i}`).value = total;
+        saveState(state);
         recalc();
       };
 
       function recalc() {
-        let debt = INITIAL_DEBT; 
+        let debt = INITIAL_DEBT;
         carry = 0;
         months.forEach((_, i) => {
           if (i>=1 && i<=6) debt += 1000;
@@ -375,7 +386,20 @@
           document.getElementById(`deb-${i}`).value = debt;
           document.getElementById(`res-${i}`).value = rest;
           carry = rest;
-        }); 
+          
+          // Save monthly data
+          if (!state.monthlyData) state.monthlyData = {};
+          state.monthlyData[i] = {
+            income: inc,
+            food: food,
+            extra: extra,
+            repayment: repay,
+            budget: base,
+            debt: debt,
+            remainder: rest
+          };
+        });
+        
         state.debt = debt;
         saveState(state);
       }
@@ -383,86 +407,105 @@
       // Build main table
       months.forEach((m,i) => {
         const tr = document.createElement('tr');
+        const monthData = state.monthlyData?.[i] || {};
+        
         tr.innerHTML = `
           <td class="month-header">${m}</td>
-          <td><input type="number" disabled id="bud-${i}"></td>
-          <td><input type="number" id="inc-${i}" value="0"></td>
-          <td><input type="number" disabled id="food-${i}" value="0"></td>
-          <td><input type="number" disabled id="extra-${i}" value="0"></td>
-          <td><input type="number" id="rep-${i}" value="0"></td>
-          <td><input type="number" disabled id="deb-${i}" value="${i===0?INITIAL_DEBT:0}"></td>
-          <td><input type="number" disabled id="res-${i}" value="0"></td>
+          <td><input type="number" id="bud-${i}" value="${monthData.budget || 0}" disabled></td>
+          <td><input type="number" id="inc-${i}" value="${monthData.income || 0}"></td>
+          <td><input type="number" id="food-${i}" value="${monthData.food || 0}"></td>
+          <td><input type="number" id="extra-${i}" value="${monthData.extra || 0}"></td>
+          <td><input type="number" id="rep-${i}" value="${monthData.repayment || 0}"></td>
+          <td><input type="number" id="deb-${i}" value="${i===0 ? INITIAL_DEBT : (monthData.debt || 0)}" disabled></td>
+          <td><input type="number" id="res-${i}" value="${monthData.remainder || 0}" disabled></td>
         `;
-        const dr = document.createElement('tr'); 
+        
+        const dr = document.createElement('tr');
         dr.className = 'details-row';
         dr.innerHTML = `
-          <td colspan="8"><div class="detail-columns">
-            <div class="detail-column"><strong>Jedzenie</strong><div id="det-food-${i}"></div><button class="add-detail-btn" onclick="addDetail(${i},'food')">+ Dodaj</button></div>
-            <div class="detail-column"><strong>Inne wydatki</strong><div id="det-extra-${i}"></div><button class="add-detail-btn" onclick="addDetail(${i},'extra')">+ Dodaj</button></div>
-          </div></td>
+          <td colspan="8">
+            <div class="detail-columns">
+              <div class="detail-column">
+                <strong>Jedzenie</strong>
+                <div id="det-food-${i}"></div>
+                <button class="add-detail-btn" onclick="addDetail(${i},'food')">+ Dodaj</button>
+              </div>
+              <div class="detail-column">
+                <strong>Inne wydatki</strong>
+                <div id="det-extra-${i}"></div>
+                <button class="add-detail-btn" onclick="addDetail(${i},'extra')">+ Dodaj</button>
+              </div>
+            </div>
+          </td>
         `;
+        
         tableBody.append(tr, dr);
+        
+        // Restore details if they exist
+        ['food', 'extra'].forEach(type => {
+          const details = state.details?.[`${type}-${i}`] || [];
+          details.forEach(detail => {
+            const cont = document.getElementById(`det-${type}-${i}`);
+            const div = document.createElement('div');
+            div.className = 'detail-entry';
+            div.innerHTML = `
+              <input type="text" placeholder="Nazwa" value="${detail.name}">
+              <input type="number" value="${detail.value}" onchange="sumDetails(${i},'${type}')">
+            `;
+            cont.appendChild(div);
+          });
+          if (details.length > 0) {
+            sumDetails(i, type);
+          }
+        });
       });
       
-      tableBody.querySelectorAll('.month-header').forEach((cell,idx)=>cell.addEventListener('click',()=>{
-        const dr=tableBody.children[idx*2+1]; 
-        dr.style.display = dr.style.display==='table-row'?'none':'table-row';
-      }));
+      tableBody.querySelectorAll('.month-header').forEach((cell,idx) => {
+        cell.addEventListener('click', () => {
+          const dr = tableBody.children[idx*2+1];
+          dr.style.display = dr.style.display === 'table-row' ? 'none' : 'table-row';
+        });
+      });
       
-      tableBody.addEventListener('input', recalc);
+      tableBody.addEventListener('input', event => {
+        if (event.target.tagName === 'INPUT') {
+          recalc();
+        }
+      });
+      
+      // Initial calculation
       recalc();
-
-      // Example table logic
-      const exMonths=['Czerwiec','Lipiec','Sierpień']; 
-      let exCarry=0;
       
-      window.addDetailEx = function(i) {
-        const cont=document.getElementById(`ex-det-${i}`);
-        const div=document.createElement('div'); 
-        div.className='detail-entry';
-        div.innerHTML = `<input type="text" placeholder="Nazwa"><input type="number" value="0" onchange="sumDetailsEx(${i})">`;
-        cont.append(div);
-      };
-      
-      window.sumDetailsEx = function(i) {
-        const vals=Array.from(document.querySelectorAll(`#ex-det-${i} input[type=number]`)).map(e=>+e.value||0);
-        document.getElementById(`ex-food-${i}`).value=vals.reduce((a,b)=>a+b,0);
-        recalcEx();
-      };
-      
-      function recalcEx(){ 
-        exCarry=0; 
-        exMonths.forEach((_,i)=>{
-          const inc=+document.getElementById(`ex-inc-${i}`).value||0;
-          const food=+document.getElementById(`ex-food-${i}`).value||0;
-          const base=exCarry+inc; 
-          document.getElementById(`ex-bud-${i}`).value=base;
-          exCarry=base-food;
-        }); 
-        state.example = exMonths.map((_,i)=>({\n          inc:document.getElementById(`ex-inc-${i}`).value,\n          food:document.getElementById(`ex-food-${i}`).value\n        })); 
-        saveState(state); 
-      }
-      
-      exMonths.forEach((m,i)=>{
-        const row=document.createElement('tr'); 
-        row.innerHTML=`
-          <td class="month-header">${m}</td>
-          <td><input type="number" disabled id="ex-bud-${i}" value="0"></td>
-          <td><input type="number" id="ex-inc-${i}" value="${state.example[i]?.inc||0}" onchange="recalcEx()"></td>
-          <td><input type="number" disabled id="ex-food-${i}" value="${state.example[i]?.food||0}"></td>
-        `;
-        const dr=document.createElement('tr'); 
-        dr.className='details-row';
-        dr.innerHTML=`<td colspan="4"><div class="detail-columns"><div class="detail-column"><strong>Jedzenie</strong><div id="ex-det-${i}"></div><button class="add-detail-btn" onclick="addDetailEx(${i})\">+ Dodaj</button></div></div></td>`;
-        exBody.append(row, dr);
+      // Export JSON
+      exportLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        const json = JSON.stringify(state, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        this.href = url;
+        this.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
       });
-      
-      document.querySelectorAll('#exampleBody .month-header').forEach((c,i)=>c.addEventListener('click',()=>{
-        const dr=exBody.children[i*2+1]; 
-        dr.style.display=dr.style.display==='table-row'?'none':'table-row';
-      }));
-      
-      recalcEx();
+
+      // Import JSON
+      importBtn.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const newState = JSON.parse(e.target.result);
+            Object.assign(state, newState);
+            saveState(state);
+            location.reload();
+          } catch(e) {
+            console.error('Error importing JSON:', e);
+            alert('Błędny plik JSON');
+          }
+        };
+        reader.readAsText(file);
+      });
     });
   </script>
 </body>
