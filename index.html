@@ -137,29 +137,50 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // State management with fallback and auto-backup
+      // Test localStorage functionality
+      try {
+        localStorage.setItem('test', 'test');
+        localStorage.removeItem('test');
+        console.log('localStorage działa poprawnie');
+      } catch(e) {
+        console.error('Problem z localStorage:', e);
+      }
+
+      // State management with improved persistence
       let autoBackupInterval;
+      
       const saveState = s => {
-        try {
-          localStorage.setItem('budget', JSON.stringify(s));
-        } catch(e) {
-          // Fallback for sandboxed environments - store in memory only
+        // First try localStorage
+        const saveToLocalStorage = () => {
+          try {
+            localStorage.setItem('budget', JSON.stringify(s));
+            return true;
+          } catch(e) {
+            console.warn('Failed to save to localStorage:', e);
+            return false;
+          }
+        };
+
+        // Try to save to localStorage first
+        if (!saveToLocalStorage()) {
+          // If localStorage fails, store in memory
           window.budgetState = s;
-          // Auto-create backup file every 30 seconds when data changes
+          console.warn('Falling back to memory storage - data will be lost on page refresh');
+          
+          // Set up auto-backup
           if (!autoBackupInterval) {
             autoBackupInterval = setInterval(() => {
               if (window.budgetDataChanged) {
+                // Try localStorage again
+                if (saveToLocalStorage()) {
+                  console.log('Successfully saved to localStorage on retry');
+                }
+                
+                // Create backup file
                 const json = JSON.stringify(s, null, 2);
                 const blob = new Blob([json], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `budget_auto_backup.json`;
-                a.style.display = 'none';
-                document.body.appendChild(a);
-                // Don't auto-download, just show notice
                 showSaveNotice();
-                document.body.removeChild(a);
                 URL.revokeObjectURL(url);
                 window.budgetDataChanged = false;
               }
@@ -168,14 +189,27 @@
           window.budgetDataChanged = true;
         }
       };
+
       const loadState = () => {
+        // First try to load from localStorage
         try {
-          return JSON.parse(localStorage.getItem('budget')||'{"debt":5700,"example":[]}');
+          const stored = localStorage.getItem('budget');
+          if (stored) {
+            return JSON.parse(stored);
+          }
         } catch(e) {
-          // Fallback for sandboxed environments
-          return window.budgetState || { debt: 5700, example: [] };
+          console.warn('Failed to load from localStorage:', e);
         }
+        
+        // If localStorage fails or is empty, try memory storage
+        if (window.budgetState) {
+          return window.budgetState;
+        }
+        
+        // If all else fails, return default state
+        return { debt: 5700, example: [] };
       };
+
       let state = loadState();
 
       // Color menu logic
@@ -405,10 +439,7 @@
           document.getElementById(`ex-bud-${i}`).value=base;
           exCarry=base-food;
         }); 
-        state.example = exMonths.map((_,i)=>({
-          inc:document.getElementById(`ex-inc-${i}`).value,
-          food:document.getElementById(`ex-food-${i}`).value
-        })); 
+        state.example = exMonths.map((_,i)=>({\n          inc:document.getElementById(`ex-inc-${i}`).value,\n          food:document.getElementById(`ex-food-${i}`).value\n        })); 
         saveState(state); 
       }
       
@@ -422,7 +453,7 @@
         `;
         const dr=document.createElement('tr'); 
         dr.className='details-row';
-        dr.innerHTML=`<td colspan="4"><div class="detail-columns"><div class="detail-column"><strong>Jedzenie</strong><div id="ex-det-${i}"></div><button class="add-detail-btn" onclick="addDetailEx(${i})">+ Dodaj</button></div></div></td>`;
+        dr.innerHTML=`<td colspan="4"><div class="detail-columns"><div class="detail-column"><strong>Jedzenie</strong><div id="ex-det-${i}"></div><button class="add-detail-btn" onclick="addDetailEx(${i})\">+ Dodaj</button></div></div></td>`;
         exBody.append(row, dr);
       });
       
