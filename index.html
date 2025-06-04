@@ -448,9 +448,10 @@
         picker.focus();
       }
 
-      // 3) „Odtworzenie” zapisanych kolorów po przeładowaniu
-      Object.entries(state.colors).forEach(([key, col]) => {
-        switch (key) {
+      // 3) Funkcja odtwarzająca zapisane kolory
+      function applySavedColors() {
+        Object.entries(state.colors).forEach(([key, col]) => {
+          switch (key) {
           case "body-bg":
             document.body.style.backgroundColor = col;
             break;
@@ -659,7 +660,8 @@
                     .forEach(b => b.style.color = col);
             break;
         }
-      });
+        });
+      }
 
       // 4) Obsługa kliknięcia: tylko Shift + LPM
       document.body.addEventListener('click', e => {
@@ -1388,6 +1390,8 @@
           document.getElementById(`${type}-${i}`).value = sum;
         });
       });
+
+      applySavedColors();
 
       // Obsługa kliknięcia w miesiąc – rozwijanie/zwijanie detali
       tableBody.querySelectorAll('.month-header').forEach((cell, idx) => {
