@@ -262,7 +262,21 @@
     }
     const db = getFirestore(app);
 
+ fbco25-codex/clarify-expected-page-behavior
+    function saveStateLocal(state) {
+      try { localStorage.setItem('budget_state', JSON.stringify(state)); } catch {}
+    }
+
+    function loadStateLocal() {
+      try { return JSON.parse(localStorage.getItem('budget_state') || '{}'); }
+      catch { return {}; }
+    }
+
     async function saveStateFire(state) {
+      saveStateLocal(state);
+
+    async function saveStateFire(state) {
+ main
       try {
         await setDoc(doc(db, "users", "default"), state);
       } catch(e) {
@@ -274,11 +288,23 @@
       try {
         const docRef = doc(db, "users", "default");
         const snapshot = await getDoc(docRef);
+ fbco25-codex/clarify-expected-page-behavior
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          saveStateLocal(data);
+          return data;
+        }
+      } catch(e) {
+        console.warn("Błąd wczytywania z Firestore:", e);
+      }
+      return loadStateLocal();
+
         if (snapshot.exists()) return snapshot.data();
       } catch(e) {
         console.warn("Błąd wczytywania z Firestore:", e);
       }
       return {};
+ main
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -448,9 +474,16 @@
         picker.focus();
       }
 
+ fbco25-codex/clarify-expected-page-behavior
+      // 3) Funkcja odtwarzająca zapisane kolory
+      function applySavedColors() {
+        Object.entries(state.colors).forEach(([key, col]) => {
+          switch (key) {
+
       // 3) „Odtworzenie” zapisanych kolorów po przeładowaniu
       Object.entries(state.colors).forEach(([key, col]) => {
         switch (key) {
+ main
           case "body-bg":
             document.body.style.backgroundColor = col;
             break;
@@ -659,7 +692,12 @@
                     .forEach(b => b.style.color = col);
             break;
         }
+ fbco25-codex/clarify-expected-page-behavior
+        });
+      }
+
       });
+ main
 
       // 4) Obsługa kliknięcia: tylko Shift + LPM
       document.body.addEventListener('click', e => {
@@ -1389,6 +1427,11 @@
         });
       });
 
+ fbco25-codex/clarify-expected-page-behavior
+      applySavedColors();
+
+
+ main
       // Obsługa kliknięcia w miesiąc – rozwijanie/zwijanie detali
       tableBody.querySelectorAll('.month-header').forEach((cell, idx) => {
         cell.addEventListener('click', () => {
