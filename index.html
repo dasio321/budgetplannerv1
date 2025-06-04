@@ -1,112 +1,1425 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Budget 2025</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Bradley Hand', cursive;
+      background: #c19a6b;
+      margin: 0;
+      padding: 40px;
+      color: #4a3b2d;
+      border: 6px solid #805a3f;
+      border-radius: 20px;
+      box-sizing: border-box;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #805a3f;
+    }
+    .info {
+      background: #916647;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 15px;
+      color: #d8bfa1;
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-bottom: 24px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 16px rgba(100,70,10,0.07);
+      border: 1px solid #e4ad85; /* table-frame border */
+    }
+    th, td {
+      padding: 8px 10px;
+      text-align: left;
+      border: 1px solid #e4ad85; /* cell-border */
+      cursor: pointer;
+      position: relative;
+    }
+    thead th {
+      background: #e4ad85; /* default header-bg */
+    }
+    tbody tr:nth-child(even) td {
+      background: #fee1bb; /* row-even-bg */
+    }
+    tbody tr:nth-child(odd) td {
+      background: #ffe7c1; /* row-odd-bg */
+    }
+    input {
+      font-family: inherit;
+      font-size: 1em;
+    }
+    input[type=number] {
+      width: 80px;
+      padding: 4px;
+      border-radius: 6px;
+      border: 1px solid #e4ad85; /* input-border */
+      background: #feecd4; /* input-bg */
+      color: #805a3f; /* input-text */
+      cursor: pointer;
+    }
+    .month-header {
+      cursor: pointer;
+      font-weight: bold;
+      color: #916647; /* month-header-text */
+      background: transparent; /* month-header-bg */
+    }
+    .details-row {
+      display: none;
+    }
+    .detail-container {
+      background: #f6e1c3; /* unified detail-bg */
+      padding: 10px;
+      border-radius: 10px;
+    }
+    .detail-columns {
+      display: flex;
+      gap: 20px;
+      margin-top: 10px;
+    }
+    .detail-column input[type=text] {
+      width: calc(100% - 12px);
+      margin-bottom: 4px;
+      padding: 4px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-family: inherit;
+      color: #805a3f;
+    }
+    .detail-entry {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .detail-entry input[type="text"],
+    .detail-entry input[type="number"] {
+      flex: 1;
+      cursor: pointer;
+    }
+    .add-detail-btn {
+      background: #e6d3b3; /* add-btn-bg */
+      border: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #805a3f; /* add-btn-text */
+    }
+    .fixed-actions {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    .fixed-actions button,
+    .fixed-actions a {
+      padding: 10px 16px;
+      border-radius: 12px;
+      text-decoration: none;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    .export-link {
+      background: #c19a6b; /* export-link-bg */
+      color: #4a3b2d; /* export-link-text */
+    }
+    .import-btn {
+      background: #805a3f; /* import-btn-bg */
+      color: #d8bfa1; /* import-btn-text */
+    }
+
+    /* Ukryty picker kolorów */
+    #colorPicker {
+      position: absolute;
+      display: none;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: none;
+      cursor: pointer;
+      z-index: 1000;
+    }
+    /* Ukryty input do wpisania kodu HEX */
+    #hexInput {
+      position: absolute;
+      display: none;
+      width: 70px;
+      padding: 2px 4px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9em;
+      z-index: 1000;
+    }
+    /* Małe menu wyboru właściwości do kolorowania */
+    #propMenu {
+      position: absolute;
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 6px;
+      border-radius: 6px;
+      display: none;
+      z-index: 1001;
+    }
+    #propMenu button {
+      display: block;
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 4px 8px;
+      text-align: left;
+      cursor: pointer;
+    }
+    #propMenu button:hover {
+      background: #eee;
+    }
+  </style>
 </head>
-<body>
-  <button class="switch-btn">🔁 Przełącz stronę</button>
+<body data-color-types="body-bg,body-border">
+  <!-- Ukryty input do wyboru koloru -->
+  <input type="color" id="colorPicker" />
+  <!-- Ukryty input do wpisania kodu HEX -->
+  <input type="text" id="hexInput" placeholder="#RRGGBB" maxlength="7" />
 
-  <!-- Strona 1 -->
-  <div id="tablePage">
-    <h1>Budget 2025</h1>
-    <div class="info">
-      Czerwiec startuje z budżetem 0, zaległy dług 5700 zł.<br>
-      Lipiec–Grudzień: +1000 zł do długu co miesiąc.<br>
-      Czynsz: 500 zł/mc<br>
-      Spłata: 30% (budżet+przychody−czynsz)<br>
+  <!-- Małe menu wyboru właściwości (wybór między bg/text/border) -->
+  <div id="propMenu"></div>
+
+  <!-- Tabela budżetu -->
+  <!-- 1) Nagłówek i jego tekst -->
+  <h1 data-color-types="h1-color">Budget 2025</h1>
+
+  <!-- 2) Sekcja .info – tu klikając w dowolne miejsce wewnątrz można zmienić tło lub tekst -->
+  <div class="info" data-color-types="info-bg,info-text">
+    <span data-color-types="info-bg,info-text">
+      Czerwiec startuje z budżetem 0, zaległy dług 5700 zł.<br>
+      Lipiec–Grudzień: +1000 zł do długu co miesiąc.<br>
+      Czynsz: 500 zł/mc<br>
+      Spłata: 30% (budżet + przychody – czynsz)<br>
       Nadwyżka przechodzi dalej.
-    </div>
-    <table id="budgetTable">
-      <thead>
-        <tr><th>Miesiąc</th><th>Budżet</th><th>Przychody</th><th>Jedzenie</th><th>Inne wydatki</th><th>Spłata</th><th>Dług</th><th>Reszta</th></tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
-    <div class="fixed-actions">
-      <a id="exportLink" class="export-link" download="budget_state.json">Eksportuj JSON</a>
-      <button id="importBtn" class="import-btn">Wczytaj JSON</button>
-      <input type="file" id="fileInput" accept="application/json" style="display:none;" />
-    </div>
+    </span>
   </div>
 
-  <!-- Strona 2 -->
-  <div id="secondPage">
-    <h1>Druga strona</h1>
-    <p>Paleta kolorów:</p>
-    <table class="palette-table">
-      <tbody>
-        <tr>
-          <td><div class="color-swatch" style="background:#fefcf2">#FEFCF2</div></td>
-          <td><div class="color-swatch" style="background:#f5f5dc">#F5F5DC</div></td>
-          <td><div class="color-swatch" style="background:#e6dfb8">#E6DFB8</div></td>
-          <td><div class="color-swatch" style="background:#d8c590">#D8C590</div></td>
-          <td><div class="color-swatch" style="background:#c9ac68">#C9AC68</div></td>
-          <td><div class="color-swatch" style="background:#ba923f">#BA923F</div></td>
-          <td><div class="color-swatch" style="background:#9d7b4f">#9D7B4F</div></td>
-          <td><div class="color-swatch" style="background:#806142">#806142</div></td>
-        </tr>
-        <tr>
-          <td><div class="color-swatch" style="background:#ffe5ea">#FFE5EA</div></td>
-          <td><div class="color-swatch" style="background:#ffd1dc">#FFD1DC</div></td>
-          <td><div class="color-swatch" style="background:#ffc0ce">#FFC0CE</div></td>
-          <td><div class="color-swatch" style="background:#ffafc0">#FFAFC0</div></td>
-          <td><div class="color-swatch" style="background:#ff9eb2">#FF9EB2</div></td>
-          <td><div class="color-swatch" style="background:#ff8dac">#FF8DAC</div></td>
-          <td><div class="color-swatch" style="background:#e0667d">#E0667D</div></td>
-          <td><div class="color-swatch" style="background:#c55264">#C55264</div></td>
-        </tr>
-        <tr>
-          <td><div class="color-swatch" style="background:#eafdf5">#EAFDF5</div></td>
-          <td><div class="color-swatch" style="background:#d6f5e3">#D6F5E3</div></td>
-          <td><div class="color-swatch" style="background:#b0ebc8">#B0EBC8</div></td>
-          <td><div class="color-swatch" style="background:#8be1ad">#8BE1AD</div></td>
-          <td><div class="color-swatch" style="background:#66d693">#66D693</div></td>
-          <td><div class="color-swatch" style="background:#41cc78">#41CC78</div></td>
-          <td><div class="color-swatch" style="background:#28a165">#28A165</div></td>
-          <td><div class="color-swatch" style="background:#1f7f4e">#1F7F4E</div></td>
-        </tr>
-      </tbody>
-    </table>
-    <!-- Color Menu -->
-    <div id="colorMenu" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; padding:10px; border-radius:8px; z-index:1000;">
-      <label for="colorTarget">Element do pokolorowania:</label>
-      <select id="colorTarget" style="width:100%; margin-bottom:8px;">
-        <option value="body-bg">Tło strony</option>
-        <option value="body-border">Obramowanie strony</option>
-        <option value="body-text">Kolor tekstu ogólnego</option>
-        <option value="h1-color">Kolor nagłówków (h1,h2)</option>
-        <option value="info-bg">Tło sekcji info</option>
-        <option value="info-text">Kolor tekstu sekcji info</option>
-        <option value="cell-border">Obramowanie komórek tabeli</option>
-        <option value="thead-bg">Tło nagłówka tabeli</option>
-        <option value="row-even-bg">Tło parzystych wierszy</option>
-        <option value="row-odd-bg">Tło nieparzystych wierszy</option>
-        <option value="input-bg">Tło pól liczbowych</option>
-        <option value="input-border">Obramowanie pól liczbowych</option>
-        <option value="input-text">Kolor tekstu pól liczbowych</option>
-        <option value="month-header-color">Kolor nagłówków miesięcy</option>
-        <option value="detail-bg">Tło kolumn szczegółów</option>
-        <option value="add-btn-bg">Tło przycisku “+ Dodaj”</option>
-        <option value="switch-bg">Tło przycisku przełączania</option>
-        <option value="switch-text">Kolor tekstu przycisku przełączania</option>
-        <option value="export-link-bg">Tło przycisku eksportu</option>
-        <option value="export-link-text">Kolor tekstu eksportu</option>
-        <option value="import-btn-bg">Tło przycisku importu</option>
-        <option value="import-btn-text">Kolor tekstu importu</option>
-        <option value="table-shadow-color">Kolor cienia tabeli</option>
-      </select>
-      <button id="applyColorBtn" style="width:100%;">Zastosuj</button>
-    </div>
-    <h2>Przykładowa tabela"</h2>
-    <table class="example-table" id="exampleTable">
-      <thead><tr><th>Miesiąc</th><th>Budżet</th><th>Przychody</th><th>Jedzenie</th></tr></thead>
-      <tbody id="exampleBody"></tbody>
-    </table>
+  <!-- 3) Cała tabela – kliknięcie w obramowanie lub cień -->
+  <table id="budgetTable" data-color-types="table-frame-border,table-shadow-color">
+    <!-- 3.1) Nagłówek tabeli -->
+    <thead data-color-types="thead-bg,thead-text">
+      <tr>
+        <th data-color-types="th-month-bg,th-month-border,th-month-text">Miesiąc</th>
+        <th data-color-types="th-bud-bg,th-bud-border,th-bud-text">Budżet</th>
+        <th data-color-types="th-inc-bg,th-inc-border,th-inc-text">Przychody</th>
+        <th data-color-types="th-food-col-bg,th-food-col-border,th-food-col-text">Jedzenie</th>
+        <th data-color-types="th-extra-col-bg,th-extra-col-border,th-extra-col-text">Inne wydatki</th>
+        <th data-color-types="th-rep-bg,th-rep-border,th-rep-text">Spłata</th>
+        <th data-color-types="th-deb-bg,th-deb-border,th-deb-text">Dług</th>
+        <th data-color-types="th-res-bg,th-res-border,th-res-text">Reszta</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+  <!-- 4) Przyciski eksportu / importu JSON -->
+  <div class="fixed-actions">
+    <a id="exportLink"
+       class="export-link"
+       data-color-types="export-link-bg,export-link-text"
+       download="budget_state.json">Eksportuj JSON</a>
+    <button id="importBtn"
+            class="import-btn"
+            data-color-types="import-btn-bg,import-btn-text">Wczytaj JSON</button>
+    <input type="file" id="fileInput" accept="application/json" style="display:none;" />
   </div>
 
-  <script src="app.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // 1) Konfiguracja Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDdg6_dxbA3Zph1V8COHQpw6f5qJooM7n8",
+      authDomain: "budget-planner-34a0f.firebaseapp.com",
+      projectId: "budget-planner-34a0f",
+      storageBucket: "budget-planner-34a0f.appspot.com",
+      messagingSenderId: "211686407501",
+      appId: "1:211686407501:web:61eb65af3b9d0b04",
+      measurementId: "G-CF9TTSR21S"
+    };
+    const app = initializeApp(firebaseConfig);
+    let analytics;
+    try {
+      analytics = getAnalytics(app);
+    } catch (e) {
+      console.warn("Analytics niedostępne:", e);
+    }
+    const db = getFirestore(app);
+
+    function saveStateLocal(state) {
+      try { localStorage.setItem('budget_state', JSON.stringify(state)); } catch {}
+    }
+
+    function loadStateLocal() {
+      try { return JSON.parse(localStorage.getItem('budget_state') || '{}'); }
+      catch { return {}; }
+    }
+
+    async function saveStateFire(state) {
+      saveStateLocal(state);
+      try {
+        await setDoc(doc(db, "users", "default"), state);
+      } catch(e) {
+        console.warn("Błąd zapisu do Firestore:", e);
+      }
+    }
+
+    async function loadStateFire() {
+      try {
+        const docRef = doc(db, "users", "default");
+        const snapshot = await getDoc(docRef);
+        if (snapshot.exists()) {
+          const data = snapshot.data();
+          saveStateLocal(data);
+          return data;
+        }
+      } catch(e) {
+        console.warn("Błąd wczytywania z Firestore:", e);
+      }
+      return loadStateLocal();
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      let state = await loadStateFire();
+      if (!state.values)  state.values  = {};
+      if (!state.details) state.details = { food: {}, extra: {} };
+      if (!state.colors)  state.colors  = {};
+      if (!state.manualRep) state.manualRep = new Array(7).fill(false);
+
+      // --- 2) Menu wyboru właściwości do kolorowania ---
+      const propMenu = document.getElementById('propMenu');
+      const picker   = document.getElementById('colorPicker');
+      const hexInput = document.getElementById('hexInput');
+      let propButtons = [];
+
+      function showPropMenu(opts, x, y, element) {
+        propMenu.innerHTML = '';
+        propMenu.style.top = y + 'px';
+        propMenu.style.left = x + 'px';
+        opts.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.textContent = opt;
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            chooseProp(opt, element);
+            hidePropMenu();
+          });
+          propMenu.appendChild(btn);
+          propButtons.push(btn);
+        });
+        propMenu.style.display = 'block';
+      }
+
+      function hidePropMenu() {
+        propMenu.style.display = 'none';
+        propButtons.forEach(b => b.remove());
+        propButtons = [];
+      }
+
+      let currentElement = null;
+      let currentPropKey = null;
+      let lastClickX = 0, lastClickY = 0;
+
+      function chooseProp(prop, elt) {
+        currentElement  = elt;
+        currentPropKey  = prop;
+        let initial = '#ffffff';
+        const cs = getComputedStyle(elt);
+
+        // Tutaj odczytujemy aktualny kolor w zależności od klucza
+        switch (prop) {
+          case 'body-bg': initial = cs.backgroundColor; break;
+          case 'body-border': initial = cs.borderColor; break;
+          case 'h1-color': initial = cs.color; break;
+          case 'info-bg': initial = cs.backgroundColor; break;
+          case 'info-text': initial = cs.color; break;
+          case 'table-frame-border': initial = getComputedStyle(document.getElementById('budgetTable')).borderColor; break;
+          case 'table-shadow-color': initial = 'rgba(0,0,0,0)'; break;
+          case 'thead-bg': initial = cs.backgroundColor; break;
+          case 'thead-text': initial = cs.color; break;
+
+          // Dla każdej komórki nagłówka
+          case 'th-month-bg': initial = cs.backgroundColor; break;
+          case 'th-month-border': initial = cs.borderColor; break;
+          case 'th-month-text': initial = cs.color; break;
+          case 'th-bud-bg': initial = cs.backgroundColor; break;
+          case 'th-bud-border': initial = cs.borderColor; break;
+          case 'th-bud-text': initial = cs.color; break;
+          case 'th-inc-bg': initial = cs.backgroundColor; break;
+          case 'th-inc-border': initial = cs.borderColor; break;
+          case 'th-inc-text': initial = cs.color; break;
+          case 'th-food-col-bg': initial = cs.backgroundColor; break;
+          case 'th-food-col-border': initial = cs.borderColor; break;
+          case 'th-food-col-text': initial = cs.color; break;
+          case 'th-extra-col-bg': initial = cs.backgroundColor; break;
+          case 'th-extra-col-border': initial = cs.borderColor; break;
+          case 'th-extra-col-text': initial = cs.color; break;
+          case 'th-rep-bg': initial = cs.backgroundColor; break;
+          case 'th-rep-border': initial = cs.borderColor; break;
+          case 'th-rep-text': initial = cs.color; break;
+          case 'th-deb-bg': initial = cs.backgroundColor; break;
+          case 'th-deb-border': initial = cs.borderColor; break;
+          case 'th-deb-text': initial = cs.color; break;
+          case 'th-res-bg': initial = cs.backgroundColor; break;
+          case 'th-res-border': initial = cs.borderColor; break;
+          case 'th-res-text': initial = cs.color; break;
+
+          // Komórki tabeli i wiersze
+          case 'cell-bg': initial = cs.backgroundColor; break;
+          case 'cell-border': initial = cs.borderColor; break;
+          case 'cell-text': initial = cs.color; break;
+          case 'row-even-bg': {
+            const el = document.querySelector("tbody tr:nth-child(even) td");
+            if (el) initial = getComputedStyle(el).backgroundColor;
+          } break;
+          case 'row-odd-bg': {
+            const el = document.querySelector("tbody tr:nth-child(odd) td");
+            if (el) initial = getComputedStyle(el).backgroundColor;
+          } break;
+          case 'row-even-text': {
+            const el = document.querySelector("tbody tr:nth-child(even) td");
+            if (el) initial = getComputedStyle(el).color;
+          } break;
+          case 'row-odd-text': {
+            const el = document.querySelector("tbody tr:nth-child(odd) td");
+            if (el) initial = getComputedStyle(el).color;
+          } break;
+          case 'month-header-bg': {
+            const el = document.querySelector(".month-header");
+            if (el) initial = getComputedStyle(el).backgroundColor;
+          } break;
+          case 'month-header-text': {
+            const el = document.querySelector(".month-header");
+            if (el) initial = getComputedStyle(el).color;
+          } break;
+
+          // Inputy
+          case 'input-bg': initial = cs.backgroundColor; break;
+          case 'input-border': initial = cs.borderColor; break;
+          case 'input-text': initial = cs.color; break;
+
+          // Eksport/Import
+          case 'export-link-bg': initial = getComputedStyle(document.getElementById("exportLink")).backgroundColor; break;
+          case 'export-link-text': initial = getComputedStyle(document.getElementById("exportLink")).color; break;
+          case 'import-btn-bg': initial = getComputedStyle(document.getElementById("importBtn")).backgroundColor; break;
+          case 'import-btn-text': initial = getComputedStyle(document.getElementById("importBtn")).color; break;
+
+          // Unified detail-bg
+          case 'detail-bg': {
+            const el = document.querySelector(".detail-container");
+            if (el) initial = getComputedStyle(el).backgroundColor;
+          } break;
+          case 'detail-text': {
+            const el = document.querySelector(".detail-container strong");
+            if (el) initial = getComputedStyle(el).color;
+          } break;
+          case 'add-btn-bg': {
+            const el = document.querySelector(".add-detail-btn");
+            if (el) initial = getComputedStyle(el).backgroundColor;
+          } break;
+          case 'add-btn-text': {
+            const el = document.querySelector(".add-detail-btn");
+            if (el) initial = getComputedStyle(el).color;
+          } break;
+        }
+
+        // rgb(...) → #RRGGBB
+        if (initial.startsWith("rgb")) {
+          const nums = initial.match(/\d+/g).map(Number);
+          initial = "#" + nums.slice(0,3).map(n => n.toString(16).padStart(2,'0')).join('');
+        }
+        if (state.colors[prop]) {
+          initial = state.colors[prop];
+        }
+
+        // Pokaż oba inputy
+        picker.value = initial;
+        picker.style.top  = (lastClickY + 4) + 'px';
+        picker.style.left = (lastClickX + 4) + 'px';
+        picker.style.display = 'block';
+
+        hexInput.value = initial;
+        hexInput.style.top  = (lastClickY + 4) + 'px';
+        hexInput.style.left = (lastClickX + 40) + 'px';
+        hexInput.style.display = 'block';
+
+        picker.focus();
+      }
+
+      // 3) Funkcja odtwarzająca zapisane kolory
+      function applySavedColors() {
+        Object.entries(state.colors).forEach(([key, col]) => {
+          switch (key) {
+          case "body-bg":
+            document.body.style.backgroundColor = col;
+            break;
+          case "body-border":
+            document.body.style.borderColor = col;
+            break;
+          case "h1-color":
+            document.querySelectorAll("h1, h2").forEach(h => h.style.color = col);
+            break;
+          case "info-bg":
+            document.querySelector(".info").style.backgroundColor = col;
+            break;
+          case "info-text":
+            document.querySelector(".info span").style.color = col;
+            break;
+          case "table-frame-border":
+            document.getElementById("budgetTable").style.border = `1px solid ${col}`;
+            break;
+          case "table-shadow-color":
+            document.querySelectorAll("table")
+                    .forEach(tbl => tbl.style.boxShadow = `0 2px 16px ${col}`);
+            break;
+          case "thead-bg":
+            document.querySelector("thead").style.backgroundColor = col;
+            break;
+          case "thead-text":
+            document.querySelectorAll("thead th").forEach(h => h.style.color = col);
+            break;
+
+          // Nagłówki kolumn
+          case "th-month-bg":
+            document.querySelectorAll("thead th:nth-child(1)")
+                    .forEach(h => h.style.backgroundColor = col);
+            break;
+          case "th-month-border":
+            document.querySelectorAll("thead th:nth-child(1)")
+                    .forEach(h => h.style.borderColor = col);
+            break;
+          case "th-month-text":
+            document.querySelectorAll("thead th:nth-child(1)")
+                    .forEach(h => h.style.color = col);
+            break;
+          case "th-bud-bg":
+            document.querySelectorAll("thead th:nth-child(2)")
+                    .forEach(h => h.style.backgroundColor = col);
+            break;
+          case "th-bud-border":
+            document.querySelectorAll("thead th:nth-child(2)")
+                    .forEach(h => h.style.borderColor = col);
+            break;
+          case "th-bud-text":
+            document.querySelectorAll("thead th:nth-child(2)")
+                    .forEach(h => h.style.color = col);
+            break;
+          case "th-inc-bg":
+            document.querySelectorAll("thead th:nth-child(3)")
+                    .forEach(h => h.style.backgroundColor = col);
+            break;
+          case "th-inc-border":
+            document.querySelectorAll("thead th:nth-child(3)")
+                    .forEach(h => h.style.borderColor = col);
+            break;
+          case "th-inc-text":
+            document.querySelectorAll("thead th:nth-child(3)")
+                    .forEach(h => h.style.color = col);
+            break;
+          case "th-food-col-bg":
+            document.querySelectorAll("thead th:nth-child(4)")
+                    .forEach(h => h.style.backgroundColor = col);
+            break;
+          case "th-food-col-border":
+            document.querySelectorAll("thead th:nth-child(4)")
+                    .forEach(h => h.style.borderColor = col);
+            break;
+          case "th-food-col-text":
+            document.querySelectorAll("thead th:nth-child(4)")
+                    .forEach(h => h.style.color = col);
+            break;
+          case "th-extra-col-bg":
+            document.querySelectorAll("thead th:nth-child(5)")
+                    .forEach(h => h.style.backgroundColor = col);
+            break;
+          case "th-extra-col-border":
+            document.querySelectorAll("thead th:nth-child(5)")
+                    .forEach(h => h.style.borderColor = col);
+            break;
+          case "th-extra-col-text":
+            document.querySelectorAll("thead th:nth-child(5)")
+                    .forEach(h => h.style.color = col);
+            break;
+          case "th-rep-bg":
+            document.querySelectorAll("thead th:nth-child(6)")
+                    .forEach(h => h.style.backgroundColor = col);
+            break;
+          case "th-rep-border":
+            document.querySelectorAll("thead th:nth-child(6)")
+                    .forEach(h => h.style.borderColor = col);
+            break;
+          case "th-rep-text":
+            document.querySelectorAll("thead th:nth-child(6)")
+                    .forEach(h => h.style.color = col);
+            break;
+          case "th-deb-bg":
+            document.querySelectorAll("thead th:nth-child(7)")
+                    .forEach(h => h.style.backgroundColor = col);
+            break;
+          case "th-deb-border":
+            document.querySelectorAll("thead th:nth-child(7)")
+                    .forEach(h => h.style.borderColor = col);
+            break;
+          case "th-deb-text":
+            document.querySelectorAll("thead th:nth-child(7)")
+                    .forEach(h => h.style.color = col);
+            break;
+          case "th-res-bg":
+            document.querySelectorAll("thead th:nth-child(8)")
+                    .forEach(h => h.style.backgroundColor = col);
+            break;
+          case "th-res-border":
+            document.querySelectorAll("thead th:nth-child(8)")
+                    .forEach(h => h.style.borderColor = col);
+            break;
+          case "th-res-text":
+            document.querySelectorAll("thead th:nth-child(8)")
+                    .forEach(h => h.style.color = col);
+            break;
+
+          // Komórki i wiersze
+          case "cell-bg":
+            document.querySelectorAll("th, td").forEach(c => c.style.backgroundColor = col);
+            break;
+          case "cell-border":
+            document.querySelectorAll("th, td").forEach(c => c.style.borderColor = col);
+            break;
+          case "cell-text":
+            document.querySelectorAll("th, td").forEach(c => c.style.color = col);
+            break;
+          case "row-even-bg":
+            document.querySelectorAll("tbody tr:nth-child(even) td")
+                    .forEach(r => r.style.backgroundColor = col);
+            break;
+          case "row-even-text":
+            document.querySelectorAll("tbody tr:nth-child(even) td")
+                    .forEach(r => r.style.color = col);
+            break;
+          case "row-odd-bg":
+            document.querySelectorAll("tbody tr:nth-child(odd) td")
+                    .forEach(r => r.style.backgroundColor = col);
+            break;
+          case "row-odd-text":
+            document.querySelectorAll("tbody tr:nth-child(odd) td")
+                    .forEach(r => r.style.color = col);
+            break;
+          case "month-header-bg":
+            document.querySelectorAll(".month-header")
+                    .forEach(m => m.style.backgroundColor = col);
+            break;
+          case "month-header-text":
+            document.querySelectorAll(".month-header")
+                    .forEach(m => m.style.color = col);
+            break;
+
+          // Inputy
+          case "input-bg":
+            document.querySelectorAll("input[type=number]")
+                    .forEach(i => i.style.backgroundColor = col);
+            break;
+          case "input-border":
+            document.querySelectorAll("input[type=number]")
+                    .forEach(i => i.style.borderColor = col);
+            break;
+          case "input-text":
+            document.querySelectorAll("input[type=number]")
+                    .forEach(i => i.style.color = col);
+            break;
+
+          // Eksport/Import
+          case "export-link-bg":
+            document.getElementById("exportLink").style.backgroundColor = col;
+            break;
+          case "export-link-text":
+            document.getElementById("exportLink").style.color = col;
+            break;
+          case "import-btn-bg":
+            document.getElementById("importBtn").style.backgroundColor = col;
+            break;
+          case "import-btn-text":
+            document.getElementById("importBtn").style.color = col;
+            break;
+
+          // Unified detail
+          case "detail-bg":
+            document.querySelectorAll(".detail-container")
+                    .forEach(d => d.style.backgroundColor = col);
+            break;
+          case "detail-text":
+            document.querySelectorAll(".detail-container strong")
+                    .forEach(s => s.style.color = col);
+            break;
+          case "add-btn-bg":
+            document.querySelectorAll(".add-detail-btn")
+                    .forEach(b => b.style.backgroundColor = col);
+            break;
+          case "add-btn-text":
+            document.querySelectorAll(".add-detail-btn")
+                    .forEach(b => b.style.color = col);
+            break;
+        }
+        });
+      }
+
+      // 4) Obsługa kliknięcia: tylko Shift + LPM
+      document.body.addEventListener('click', e => {
+        // jeśli menu jest otwarte i klik poza propMenu/picker/hexInput → chowamy je
+        if (!e.shiftKey || e.button !== 0) {
+          if (
+            !propMenu.contains(e.target) &&
+            !picker.contains(e.target) &&
+            !hexInput.contains(e.target)
+          ) {
+            picker.style.display = 'none';
+            hexInput.style.display = 'none';
+            hidePropMenu();
+            currentElement = null;
+            currentPropKey = null;
+          }
+          return;
+        }
+
+        // tylko gdy Shift+LPM
+        const elt = e.target.closest('[data-color-types]');
+        lastClickX = e.pageX;
+        lastClickY = e.pageY;
+
+        if (!elt) {
+          picker.style.display = 'none';
+          hexInput.style.display = 'none';
+          hidePropMenu();
+          currentElement = null;
+          currentPropKey = null;
+          return;
+        }
+
+        // Podział na opcje
+        const types = elt.getAttribute('data-color-types').split(',');
+        if (types.length > 1) {
+          showPropMenu(types, e.pageX, e.pageY, elt);
+        } else {
+          chooseProp(types[0], elt);
+        }
+      });
+
+      // 5) Po wybraniu koloru w <input type="color">
+      picker.addEventListener('input', async e => {
+        if (!currentElement || !currentPropKey) return;
+        const newColor = e.target.value;
+        const key = currentPropKey;
+
+        // synchronizuj hexInput
+        hexInput.value = newColor;
+
+        switch (key) {
+          case "body-bg":
+            document.body.style.backgroundColor = newColor;
+            break;
+          case "body-border":
+            document.body.style.borderColor = newColor;
+            break;
+          case "h1-color":
+            document.querySelectorAll("h1, h2").forEach(h => h.style.color = newColor);
+            break;
+          case "info-bg":
+            document.querySelector(".info").style.backgroundColor = newColor;
+            break;
+          case "info-text":
+            document.querySelector(".info span").style.color = newColor;
+            break;
+          case "table-frame-border":
+            document.getElementById("budgetTable").style.border = `1px solid ${newColor}`;
+            break;
+          case "table-shadow-color":
+            document.querySelectorAll("table")
+                    .forEach(tbl => tbl.style.boxShadow = `0 2px 16px ${newColor}`);
+            break;
+          case "thead-bg":
+            document.querySelector("thead").style.backgroundColor = newColor;
+            break;
+          case "thead-text":
+            document.querySelectorAll("thead th").forEach(h => h.style.color = newColor);
+            break;
+
+          // Nagłówki kolumn
+          case "th-month-bg":
+            document.querySelectorAll("thead th:nth-child(1)")
+                    .forEach(h => h.style.backgroundColor = newColor);
+            break;
+          case "th-month-border":
+            document.querySelectorAll("thead th:nth-child(1)")
+                    .forEach(h => h.style.borderColor = newColor);
+            break;
+          case "th-month-text":
+            document.querySelectorAll("thead th:nth-child(1)")
+                    .forEach(h => h.style.color = newColor);
+            break;
+          case "th-bud-bg":
+            document.querySelectorAll("thead th:nth-child(2)")
+                    .forEach(h => h.style.backgroundColor = newColor);
+            break;
+          case "th-bud-border":
+            document.querySelectorAll("thead th:nth-child(2)")
+                    .forEach(h => h.style.borderColor = newColor);
+            break;
+          case "th-bud-text":
+            document.querySelectorAll("thead th:nth-child(2)")
+                    .forEach(h => h.style.color = newColor);
+            break;
+          case "th-inc-bg":
+            document.querySelectorAll("thead th:nth-child(3)")
+                    .forEach(h => h.style.backgroundColor = newColor);
+            break;
+          case "th-inc-border":
+            document.querySelectorAll("thead th:nth-child(3)")
+                    .forEach(h => h.style.borderColor = newColor);
+            break;
+          case "th-inc-text":
+            document.querySelectorAll("thead th:nth-child(3)")
+                    .forEach(h => h.style.color = newColor);
+            break;
+          case "th-food-col-bg":
+            document.querySelectorAll("thead th:nth-child(4)")
+                    .forEach(h => h.style.backgroundColor = newColor);
+            break;
+          case "th-food-col-border":
+            document.querySelectorAll("thead th:nth-child(4)")
+                    .forEach(h => h.style.borderColor = newColor);
+            break;
+          case "th-food-col-text":
+            document.querySelectorAll("thead th:nth-child(4)")
+                    .forEach(h => h.style.color = newColor);
+            break;
+          case "th-extra-col-bg":
+            document.querySelectorAll("thead th:nth-child(5)")
+                    .forEach(h => h.style.backgroundColor = newColor);
+            break;
+          case "th-extra-col-border":
+            document.querySelectorAll("thead th:nth-child(5)")
+                    .forEach(h => h.style.borderColor = newColor);
+            break;
+          case "th-extra-col-text":
+            document.querySelectorAll("thead th:nth-child(5)")
+                    .forEach(h => h.style.color = newColor);
+            break;
+          case "th-rep-bg":
+            document.querySelectorAll("thead th:nth-child(6)")
+                    .forEach(h => h.style.backgroundColor = newColor);
+            break;
+          case "th-rep-border":
+            document.querySelectorAll("thead th:nth-child(6)")
+                    .forEach(h => h.style.borderColor = newColor);
+            break;
+          case "th-rep-text":
+            document.querySelectorAll("thead th:nth-child(6)")
+                    .forEach(h => h.style.color = newColor);
+            break;
+          case "th-deb-bg":
+            document.querySelectorAll("thead th:nth-child(7)")
+                    .forEach(h => h.style.backgroundColor = newColor);
+            break;
+          case "th-deb-border":
+            document.querySelectorAll("thead th:nth-child(7)")
+                    .forEach(h => h.style.borderColor = newColor);
+            break;
+          case "th-deb-text":
+            document.querySelectorAll("thead th:nth-child(7)")
+                    .forEach(h => h.style.color = newColor);
+            break;
+          case "th-res-bg":
+            document.querySelectorAll("thead th:nth-child(8)")
+                    .forEach(h => h.style.backgroundColor = newColor);
+            break;
+          case "th-res-border":
+            document.querySelectorAll("thead th:nth-child(8)")
+                    .forEach(h => h.style.borderColor = newColor);
+            break;
+          case "th-res-text":
+            document.querySelectorAll("thead th:nth-child(8)")
+                    .forEach(h => h.style.color = newColor);
+            break;
+
+          // Komórki i wiersze
+          case "cell-bg":
+            document.querySelectorAll("th, td").forEach(c => c.style.backgroundColor = newColor);
+            break;
+          case "cell-border":
+            document.querySelectorAll("th, td").forEach(c => c.style.borderColor = newColor);
+            break;
+          case "cell-text":
+            document.querySelectorAll("th, td").forEach(c => c.style.color = newColor);
+            break;
+          case "row-even-bg":
+            document.querySelectorAll("tbody tr:nth-child(even) td")
+                    .forEach(r => r.style.backgroundColor = newColor);
+            break;
+          case "row-even-text":
+            document.querySelectorAll("tbody tr:nth-child(even) td")
+                    .forEach(r => r.style.color = newColor);
+            break;
+          case "row-odd-bg":
+            document.querySelectorAll("tbody tr:nth-child(odd) td")
+                    .forEach(r => r.style.backgroundColor = newColor);
+            break;
+          case "row-odd-text":
+            document.querySelectorAll("tbody tr:nth-child(odd) td")
+                    .forEach(r => r.style.color = newColor);
+            break;
+          case "month-header-bg":
+            document.querySelectorAll(".month-header")
+                    .forEach(m => m.style.backgroundColor = newColor);
+            break;
+          case "month-header-text":
+            document.querySelectorAll(".month-header")
+                    .forEach(m => m.style.color = newColor);
+            break;
+
+          // Inputy
+          case "input-bg":
+            document.querySelectorAll("input[type=number]")
+                    .forEach(i => i.style.backgroundColor = newColor);
+            break;
+          case "input-border":
+            document.querySelectorAll("input[type=number]")
+                    .forEach(i => i.style.borderColor = newColor);
+            break;
+          case "input-text":
+            document.querySelectorAll("input[type=number]")
+                    .forEach(i => i.style.color = newColor);
+            break;
+
+          // Eksport/Import
+          case "export-link-bg":
+            document.getElementById("exportLink").style.backgroundColor = newColor;
+            break;
+          case "export-link-text":
+            document.getElementById("exportLink").style.color = newColor;
+            break;
+          case "import-btn-bg":
+            document.getElementById("importBtn").style.backgroundColor = newColor;
+            break;
+          case "import-btn-text":
+            document.getElementById("importBtn").style.color = newColor;
+            break;
+
+          // Unified detail
+          case "detail-bg":
+            document.querySelectorAll(".detail-container")
+                    .forEach(d => d.style.backgroundColor = newColor);
+            break;
+          case "detail-text":
+            document.querySelectorAll(".detail-container strong")
+                    .forEach(s => s.style.color = newColor);
+            break;
+          case "add-btn-bg":
+            document.querySelectorAll(".add-detail-btn")
+                    .forEach(b => b.style.backgroundColor = newColor);
+            break;
+          case "add-btn-text":
+            document.querySelectorAll(".add-detail-btn")
+                    .forEach(b => b.style.color = newColor);
+            break;
+        }
+
+        state.colors[key] = newColor;
+        await saveStateFire(state);
+      });
+
+      // 6) Po wpisaniu kodu HEX
+      hexInput.addEventListener('input', async e => {
+        let val = e.target.value.trim();
+        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+          const newColor = val;
+          picker.value = newColor;
+          const key = currentPropKey;
+          if (!currentElement || !key) return;
+
+          switch (key) {
+            case "body-bg":
+              document.body.style.backgroundColor = newColor;
+              break;
+            case "body-border":
+              document.body.style.borderColor = newColor;
+              break;
+            case "h1-color":
+              document.querySelectorAll("h1, h2").forEach(h => h.style.color = newColor);
+              break;
+            case "info-bg":
+              document.querySelector(".info").style.backgroundColor = newColor;
+              break;
+            case "info-text":
+              document.querySelector(".info span").style.color = newColor;
+              break;
+            case "table-frame-border":
+              document.getElementById("budgetTable").style.border = `1px solid ${newColor}`;
+              break;
+            case "table-shadow-color":
+              document.querySelectorAll("table")
+                      .forEach(tbl => tbl.style.boxShadow = `0 2px 16px ${newColor}`);
+              break;
+            case "thead-bg":
+              document.querySelector("thead").style.backgroundColor = newColor;
+              break;
+            case "thead-text":
+              document.querySelectorAll("thead th").forEach(h => h.style.color = newColor);
+              break;
+
+            // Nagłówki kolumn
+            case "th-month-bg":
+              document.querySelectorAll("thead th:nth-child(1)")
+                      .forEach(h => h.style.backgroundColor = newColor);
+              break;
+            case "th-month-border":
+              document.querySelectorAll("thead th:nth-child(1)")
+                      .forEach(h => h.style.borderColor = newColor);
+              break;
+            case "th-month-text":
+              document.querySelectorAll("thead th:nth-child(1)")
+                      .forEach(h => h.style.color = newColor);
+              break;
+            case "th-bud-bg":
+              document.querySelectorAll("thead th:nth-child(2)")
+                      .forEach(h => h.style.backgroundColor = newColor);
+              break;
+            case "th-bud-border":
+              document.querySelectorAll("thead th:nth-child(2)")
+                      .forEach(h => h.style.borderColor = newColor);
+              break;
+            case "th-bud-text":
+              document.querySelectorAll("thead th:nth-child(2)")
+                      .forEach(h => h.style.color = newColor);
+              break;
+            case "th-inc-bg":
+              document.querySelectorAll("thead th:nth-child(3)")
+                      .forEach(h => h.style.backgroundColor = newColor);
+              break;
+            case "th-inc-border":
+              document.querySelectorAll("thead th:nth-child(3)")
+                      .forEach(h => h.style.borderColor = newColor);
+              break;
+            case "th-inc-text":
+              document.querySelectorAll("thead th:nth-child(3)")
+                      .forEach(h => h.style.color = newColor);
+              break;
+            case "th-food-col-bg":
+              document.querySelectorAll("thead th:nth-child(4)")
+                      .forEach(h => h.style.backgroundColor = newColor);
+              break;
+            case "th-food-col-border":
+              document.querySelectorAll("thead th:nth-child(4)")
+                      .forEach(h => h.style.borderColor = newColor);
+              break;
+            case "th-food-col-text":
+              document.querySelectorAll("thead th:nth-child(4)")
+                      .forEach(h => h.style.color = newColor);
+              break;
+            case "th-extra-col-bg":
+              document.querySelectorAll("thead th:nth-child(5)")
+                      .forEach(h => h.style.backgroundColor = newColor);
+              break;
+            case "th-extra-col-border":
+              document.querySelectorAll("thead th:nth-child(5)")
+                      .forEach(h => h.style.borderColor = newColor);
+              break;
+            case "th-extra-col-text":
+              document.querySelectorAll("thead th:nth-child(5)")
+                      .forEach(h => h.style.color = newColor);
+              break;
+            case "th-rep-bg":
+              document.querySelectorAll("thead th:nth-child(6)")
+                      .forEach(h => h.style.backgroundColor = newColor);
+              break;
+            case "th-rep-border":
+              document.querySelectorAll("thead th:nth-child(6)")
+                      .forEach(h => h.style.borderColor = newColor);
+              break;
+            case "th-rep-text":
+              document.querySelectorAll("thead th:nth-child(6)")
+                      .forEach(h => h.style.color = newColor);
+              break;
+            case "th-deb-bg":
+              document.querySelectorAll("thead th:nth-child(7)")
+                      .forEach(h => h.style.backgroundColor = newColor);
+              break;
+            case "th-deb-border":
+              document.querySelectorAll("thead th:nth-child(7)")
+                      .forEach(h => h.style.borderColor = newColor);
+              break;
+            case "th-deb-text":
+              document.querySelectorAll("thead th:nth-child(7)")
+                      .forEach(h => h.style.color = newColor);
+              break;
+            case "th-res-bg":
+              document.querySelectorAll("thead th:nth-child(8)")
+                      .forEach(h => h.style.backgroundColor = newColor);
+              break;
+            case "th-res-border":
+              document.querySelectorAll("thead th:nth-child(8)")
+                      .forEach(h => h.style.borderColor = newColor);
+              break;
+            case "th-res-text":
+              document.querySelectorAll("thead th:nth-child(8)")
+                      .forEach(h => h.style.color = newColor);
+              break;
+
+            // Komórki i wiersze
+            case "cell-bg":
+              document.querySelectorAll("th, td").forEach(c => c.style.backgroundColor = newColor);
+              break;
+            case "cell-border":
+              document.querySelectorAll("th, td").forEach(c => c.style.borderColor = newColor);
+              break;
+            case "cell-text":
+              document.querySelectorAll("th, td").forEach(c => c.style.color = newColor);
+              break;
+            case "row-even-bg":
+              document.querySelectorAll("tbody tr:nth-child(even) td")
+                      .forEach(r => r.style.backgroundColor = newColor);
+              break;
+            case "row-even-text":
+              document.querySelectorAll("tbody tr:nth-child(even) td")
+                      .forEach(r => r.style.color = newColor);
+              break;
+            case "row-odd-bg":
+              document.querySelectorAll("tbody tr:nth-child(odd) td")
+                      .forEach(r => r.style.backgroundColor = newColor);
+              break;
+            case "row-odd-text":
+              document.querySelectorAll("tbody tr:nth-child(odd) td")
+                      .forEach(r => r.style.color = newColor);
+              break;
+            case "month-header-bg":
+              document.querySelectorAll(".month-header")
+                      .forEach(m => m.style.backgroundColor = newColor);
+              break;
+            case "month-header-text":
+              document.querySelectorAll(".month-header")
+                      .forEach(m => m.style.color = newColor);
+              break;
+
+            // Inputy
+            case "input-bg":
+              document.querySelectorAll("input[type=number]")
+                      .forEach(i => i.style.backgroundColor = newColor);
+              break;
+            case "input-border":
+              document.querySelectorAll("input[type=number]")
+                      .forEach(i => i.style.borderColor = newColor);
+              break;
+            case "input-text":
+              document.querySelectorAll("input[type=number]")
+                      .forEach(i => i.style.color = newColor);
+              break;
+
+            // Eksport/Import
+            case "export-link-bg":
+              document.getElementById("exportLink").style.backgroundColor = newColor;
+              break;
+            case "export-link-text":
+              document.getElementById("exportLink").style.color = newColor;
+              break;
+            case "import-btn-bg":
+              document.getElementById("importBtn").style.backgroundColor = newColor;
+              break;
+            case "import-btn-text":
+              document.getElementById("importBtn").style.color = newColor;
+              break;
+
+            // Unified detail
+            case "detail-bg":
+              document.querySelectorAll(".detail-container")
+                      .forEach(d => d.style.backgroundColor = newColor);
+              break;
+            case "detail-text":
+              document.querySelectorAll(".detail-container strong")
+                      .forEach(s => s.style.color = newColor);
+              break;
+            case "add-btn-bg":
+              document.querySelectorAll(".add-detail-btn")
+                      .forEach(b => b.style.backgroundColor = newColor);
+              break;
+            case "add-btn-text":
+              document.querySelectorAll(".add-detail-btn")
+                      .forEach(b => b.style.color = newColor);
+              break;
+          }
+
+          state.colors[key] = newColor;
+          await saveStateFire(state);
+        }
+      });
+
+      // 7) Eksport / Import JSON
+      const exportLink = document.getElementById('exportLink');
+      const importBtn  = document.getElementById('importBtn');
+      const fileInput  = document.getElementById('fileInput');
+
+      exportLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        const json = JSON.stringify(state, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        this.href = url;
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+      });
+
+      importBtn.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+          try {
+            const parsed = JSON.parse(e.target.result);
+            if (typeof parsed !== 'object' || parsed === null) {
+              alert('Niepoprawna struktura JSON');
+              return;
+            }
+            state = parsed;
+            if (!state.values)  state.values  = {};
+            if (!state.details) state.details = { food: {}, extra: {} };
+            if (!state.colors)  state.colors  = {};
+            if (!state.manualRep) state.manualRep = new Array(months.length).fill(false);
+            await saveStateFire(state);
+            location.reload();
+          } catch {
+            alert('Błędny plik JSON');
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      // 8) Logika głównej tabeli
+      const months       = ['Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
+      const RENT         = 500;
+      const INITIAL_DEBT = 5700;
+      let carry          = 0;
+
+      let manualRep = state.manualRep;
+
+      window.addDetail = function(i, type) {
+        const cont = document.getElementById(`det-${type}-${i}`);
+        const div  = document.createElement('div');
+        div.className = 'detail-entry';
+
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.placeholder = 'Nazwa';
+        nameInput.value = '';
+
+        const valueInput = document.createElement('input');
+        valueInput.type = 'number';
+        valueInput.value = '0';
+        valueInput.min = '0';
+        valueInput.step = '0.01';
+        valueInput.setAttribute('data-color-types', 'input-bg,input-border,input-text');
+        valueInput.addEventListener('change', () => sumDetails(i, type));
+
+        div.appendChild(nameInput);
+        div.appendChild(valueInput);
+        cont.appendChild(div);
+      };
+
+      window.sumDetails = function(i, type) {
+        const container = document.querySelectorAll(`#det-${type}-${i} .detail-entry`);
+        const arr = Array.from(container).map(div => {
+          const nameInput  = div.querySelector('input[type=text]');
+          const valueInput = div.querySelector('input[type=number]');
+          const num = parseFloat(valueInput.value);
+          if (isNaN(num) || num < 0) {
+            valueInput.value = '0';
+            return { name: nameInput.value, value: 0 };
+          }
+          return { name: nameInput.value, value: num };
+        });
+        const sum = arr.reduce((acc, el) => acc + el.value, 0);
+        document.getElementById(`${type}-${i}`).value = sum;
+        if (!state.details[type]) state.details[type] = {};
+        state.details[type][i] = arr;
+        recalc();
+      };
+
+      async function recalc() {
+        let debt = INITIAL_DEBT;
+        carry = 0;
+
+        months.forEach((_, i) => {
+          if (i >= 1 && i <= 6) debt += 1000;
+          const inc   = +document.getElementById(`inc-${i}`).value || 0;
+          const food  = +document.getElementById(`food-${i}`).value || 0;
+          const extra = +document.getElementById(`extra-${i}`).value || 0;
+          const base  = carry + inc;
+          document.getElementById(`bud-${i}`).value = base;
+
+          const repEl   = document.getElementById(`rep-${i}`);
+          const defaultRepay = Math.max(0, Math.round((base - RENT) * 0.3));
+          let repay;
+          if (manualRep[i]) {
+            repay = +repEl.value || 0;
+          } else {
+            repay = defaultRepay;
+            repEl.value = defaultRepay;
+          }
+          const rest  = base - (RENT + repay + food + extra);
+
+          debt = Math.max(0, debt - repay);
+          document.getElementById(`deb-${i}`).value = debt;
+          document.getElementById(`res-${i}`).value = rest;
+          carry = rest;
+        });
+
+        state.debt = debt;
+        if (!state.values) state.values = {};
+        months.forEach((_, i) => {
+          ['bud','inc','food','extra','rep','deb','res'].forEach(base => {
+            const val = +document.getElementById(`${base}-${i}`).value || 0;
+            state.values[`${base}-${i}`] = val;
+          });
+        });
+
+        await saveStateFire(state);
+      }
+
+      // 9) Generowanie wierszy i wczytywanie wartości + detali
+      const tableBody = document.getElementById('tableBody');
+      tableBody.innerHTML = '';
+      months.forEach((m, i) => {
+        const tr = document.createElement('tr');
+
+        // Komórka z nazwą miesiąca
+        const tdMonth = document.createElement('td');
+        tdMonth.className = 'month-header';
+        tdMonth.textContent = m;
+        tdMonth.setAttribute('data-color-types', 'month-header-bg,month-header-text');
+        tr.appendChild(tdMonth);
+
+        // Pozostałe komórki w wierszu
+        const idBases = ['bud','inc','food','extra','rep','deb','res'];
+        idBases.forEach(base => {
+          const td = document.createElement('td');
+          td.setAttribute('data-color-types', 'cell-bg,cell-border,cell-text');
+
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.id = `${base}-${i}`;
+          if (['bud','food','extra','deb','res'].includes(base)) {
+            input.disabled = true;
+          }
+          input.setAttribute('data-color-types', 'input-bg,input-border,input-text');
+
+          const key = `${base}-${i}`;
+          if (state.values && state.values[key] != null) {
+            input.value = state.values[key];
+          } else {
+            if (base === 'deb') {
+              input.value = (i === 0 ? INITIAL_DEBT : 0);
+            } else {
+              input.value = 0;
+            }
+          }
+
+          if (base === 'rep') {
+            input.addEventListener('input', async () => {
+              manualRep[i] = true;
+              state.manualRep = manualRep;
+              await saveStateFire(state);
+            });
+          }
+
+          td.appendChild(input);
+          tr.appendChild(td);
+        });
+
+        tableBody.appendChild(tr);
+
+        // Wiersz z rozwijaną sekcją szczegółów
+        const dr = document.createElement('tr');
+        dr.className = 'details-row';
+        dr.innerHTML = `
+          <td colspan="8">
+            <div class="detail-container" data-color-types="detail-bg">
+              <div class="detail-columns">
+                <div class="detail-column">
+                  <strong data-color-types="detail-text">Jedzenie</strong>
+                  <div id="det-food-${i}"></div>
+                  <button class="add-detail-btn"
+                          data-color-types="add-btn-bg,add-btn-text"
+                          onclick="addDetail(${i},'food')">+ Dodaj</button>
+                </div>
+                <div class="detail-column">
+                  <strong data-color-types="detail-text">Inne wydatki</strong>
+                  <div id="det-extra-${i}"></div>
+                  <button class="add-detail-btn"
+                          data-color-types="add-btn-bg,add-btn-text"
+                          onclick="addDetail(${i},'extra')">+ Dodaj</button>
+                </div>
+              </div>
+            </div>
+          </td>
+        `;
+        tableBody.appendChild(dr);
+
+        // Wczytanie zapisanych detali (food/extra)
+        ['food','extra'].forEach(type => {
+          const detailsForMonth = (state.details[type] && state.details[type][i]) || [];
+          detailsForMonth.forEach(obj => {
+            const cont = document.getElementById(`det-${type}-${i}`);
+            const div = document.createElement('div');
+            div.className = 'detail-entry';
+
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.placeholder = 'Nazwa';
+            nameInput.value = obj.name;
+
+            const valueInput = document.createElement('input');
+            valueInput.type = 'number';
+            valueInput.value = obj.value;
+            valueInput.min = '0';
+            valueInput.step = '0.01';
+            valueInput.setAttribute('data-color-types', 'input-bg,input-border,input-text');
+            valueInput.addEventListener('change', () => sumDetails(i, type));
+
+            div.appendChild(nameInput);
+            div.appendChild(valueInput);
+            cont.appendChild(div);
+          });
+          const sum = detailsForMonth.reduce((acc, el) => acc + el.value, 0);
+          document.getElementById(`${type}-${i}`).value = sum;
+        });
+      });
+
+      applySavedColors();
+
+      // Obsługa kliknięcia w miesiąc – rozwijanie/zwijanie detali
+      tableBody.querySelectorAll('.month-header').forEach((cell, idx) => {
+        cell.addEventListener('click', () => {
+          const detailsRow = tableBody.children[idx * 2 + 1];
+          detailsRow.style.display = (detailsRow.style.display === 'table-row' ? 'none' : 'table-row');
+        });
+      });
+
+      tableBody.addEventListener('input', recalc);
+
+      // 10) Pierwsze przeliczenie
+      recalc();
+    });
+  </script>
 </body>
 </html>
