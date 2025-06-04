@@ -12,33 +12,39 @@
           colorMenu.style.display = 'block';
         });
       });
+      function applyColor(target, color) {
+        switch(target) {
+          case 'body-bg': document.body.style.backgroundColor = color; break;
+          case 'body-border': document.body.style.borderColor = color; break;
+          case 'body-text': document.body.style.color = color; break;
+          case 'h1-color': document.querySelectorAll('h1, h2').forEach(h=>h.style.color = color); break;
+          case 'info-bg': document.querySelector('.info').style.backgroundColor = color; break;
+          case 'info-text': document.querySelector('.info').style.color = color; break;
+          case 'cell-border': document.querySelectorAll('th, td').forEach(c=>c.style.borderColor = color); break;
+          case 'thead-bg': document.querySelector('thead').style.backgroundColor = color; break;
+          case 'row-even-bg': document.querySelectorAll('tbody tr:nth-child(even) td').forEach(r=>r.style.backgroundColor = color); break;
+          case 'row-odd-bg': document.querySelectorAll('tbody tr:nth-child(odd) td').forEach(r=>r.style.backgroundColor = color); break;
+          case 'input-bg': document.querySelectorAll('input[type=number]').forEach(i=>i.style.backgroundColor = color); break;
+          case 'input-border': document.querySelectorAll('input[type=number]').forEach(i=>i.style.borderColor = color); break;
+          case 'input-text': document.querySelectorAll('input[type=number]').forEach(i=>i.style.color = color); break;
+          case 'month-header-color': document.querySelectorAll('.month-header').forEach(m=>m.style.color = color); break;
+          case 'detail-bg': document.querySelectorAll('.detail-column').forEach(d=>d.style.backgroundColor = color); break;
+          case 'add-btn-bg': document.querySelectorAll('.add-detail-btn').forEach(b=>b.style.backgroundColor = color); break;
+          case 'switch-bg': document.querySelector('.switch-btn').style.backgroundColor = color; break;
+          case 'switch-text': document.querySelector('.switch-btn').style.color = color; break;
+          case 'export-link-bg': exportLink.style.backgroundColor = color; break;
+          case 'export-link-text': exportLink.style.color = color; break;
+          case 'import-btn-bg': importBtn.style.backgroundColor = color; break;
+          case 'import-btn-text': importBtn.style.color = color; break;
+          case 'table-shadow-color': document.querySelectorAll('table').forEach(t=>t.style.boxShadow = `0 2px 16px ${color}`); break;
+        }
+      }
+
       applyColorBtn.addEventListener('click', () => {
         const target = colorTarget.value;
-        switch(target) {
-          case 'body-bg': document.body.style.backgroundColor = selectedColor; break;
-          case 'body-border': document.body.style.borderColor = selectedColor; break;
-          case 'body-text': document.body.style.color = selectedColor; break;
-          case 'h1-color': document.querySelectorAll('h1, h2').forEach(h=>h.style.color = selectedColor); break;
-          case 'info-bg': document.querySelector('.info').style.backgroundColor = selectedColor; break;
-          case 'info-text': document.querySelector('.info').style.color = selectedColor; break;
-          case 'cell-border': document.querySelectorAll('th, td').forEach(c=>c.style.borderColor = selectedColor); break;
-          case 'thead-bg': document.querySelector('thead').style.backgroundColor = selectedColor; break;
-          case 'row-even-bg': document.querySelectorAll('tbody tr:nth-child(even) td').forEach(r=>r.style.backgroundColor = selectedColor); break;
-          case 'row-odd-bg': document.querySelectorAll('tbody tr:nth-child(odd) td').forEach(r=>r.style.backgroundColor = selectedColor); break;
-          case 'input-bg': document.querySelectorAll('input[type=number]').forEach(i=>i.style.backgroundColor = selectedColor); break;
-          case 'input-border': document.querySelectorAll('input[type=number]').forEach(i=>i.style.borderColor = selectedColor); break;
-          case 'input-text': document.querySelectorAll('input[type=number]').forEach(i=>i.style.color = selectedColor); break;
-          case 'month-header-color': document.querySelectorAll('.month-header').forEach(m=>m.style.color = selectedColor); break;
-          case 'detail-bg': document.querySelectorAll('.detail-column').forEach(d=>d.style.backgroundColor = selectedColor); break;
-          case 'add-btn-bg': document.querySelectorAll('.add-detail-btn').forEach(b=>b.style.backgroundColor = selectedColor); break;
-          case 'switch-bg': document.querySelector('.switch-btn').style.backgroundColor = selectedColor; break;
-          case 'switch-text': document.querySelector('.switch-btn').style.color = selectedColor; break;
-          case 'export-link-bg': exportLink.style.backgroundColor = selectedColor; break;
-          case 'export-link-text': exportLink.style.color = selectedColor; break;
-          case 'import-btn-bg': importBtn.style.backgroundColor = selectedColor; break;
-          case 'import-btn-text': importBtn.style.color = selectedColor; break;
-          case 'table-shadow-color': document.querySelector('table').style.boxShadow = `0 2px 16px ${selectedColor}`; break;
-        }
+        applyColor(target, selectedColor);
+        state.colors[target] = selectedColor;
+        saveState(state);
         colorMenu.style.display = 'none';
       });
       document.addEventListener('click', e => {
@@ -49,6 +55,8 @@
       const saveState = s => localStorage.setItem('budget', JSON.stringify(s));
       const loadState = () => JSON.parse(localStorage.getItem('budget')||'{}');
       const state = loadState();
+      state.colors = state.colors || {};
+      Object.entries(state.colors).forEach(([k,c]) => applyColor(k, c));
 
       // Elements
       const tablePage = document.getElementById('tablePage');
